@@ -24,6 +24,16 @@ CREATE TABLE tbl_endereco (
     FOREIGN KEY (id_usuario) REFERENCES tbl_usuarios(id) ON DELETE CASCADE
 );
 
+CREATE TABLE tbl_autenticacao (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    senha VARCHAR(255) NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES tbl_usuarios(id) ON DELETE CASCADE
+);
+
+
+SELECT * FROM tbl_usuarios;
+
 
 INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil)
 VALUES ('12345678901', 'João', 'Silva','joao.silva@example.com', '(11) 98765-4321', 'https://example.com/foto_joao.jpg');
