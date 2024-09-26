@@ -40,36 +40,35 @@ const selectByIdUser = async function(id) {
     }
 };
 
-// Função para inserir um novo usuário e seu endereço
+const gerarHashMD5 = (senha) => {
+    return crypto.createHash('md5').update(senha).digest('hex');
+};
+
 const insertUser = async function(dadosUsuario, dadosEndereco) {
-
-    console.log("cheguei no dao", dadosUsuario)
+    console.log("cheguei no dao", dadosUsuario);
     try {
-        // let sqlUsuario = `
-        //     INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
-        //     VALUES (?, ?, ?, ?, ?, ?)
-        // `;
-
-        // console.log("esse é o sql: ", sqlUsuario)
+        // Gerar hash da senha com MD5
+        const senhaHash = gerarHashMD5(dadosUsuario.senha);
 
         let resultUsuario = await prisma.$queryRaw `INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) RETURNING id;`;
 
         let idUsuario = resultUsuario[0].id;
 
-
-        console.log(idUsuario, "o resultado foi esse: ", resultUsuario)
+        console.log(idUsuario, "o resultado foi esse: ", resultUsuario);
 
         if (resultUsuario) {
-
             if (dadosEndereco) {
                 let sqlEndereco = `
-                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, idUsuario) 
+                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
                 let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
 
-                return resultEndereco ? { id: idUsuario[0].id } : false;
+                return resultEndereco ? { id: idUsuario } : false;
             }
+
+            // Inserir a autenticação do usuário
+            await prisma.$executeRawUnsafe(`INSERT INTO tbl_autenticacao (id_usuario, senha) VALUES (${idUsuario}, '${senhaHash}');`);
 
             return { id: idUsuario };
         } else {
