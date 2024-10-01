@@ -1,14 +1,14 @@
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
+const bcrypt = require('bcrypt');
 
-// Função para listar todos os usuários
+
 const getListarUsuarios = async function() {
     try {
         let listarUsuarios = await usuarioDAO.selectAllUsers();
         let usuariosJSON = {};
 
         if (listarUsuarios && listarUsuarios.length > 0) {
-            // Agrupa os usuários e seus endereços
             let usuariosComEnderecos = await Promise.all(
                 listarUsuarios.map(async(usuario) => {
                     let usuarioEndereco = await usuarioDAO.selectByIdUser(usuario.id);
@@ -36,21 +36,21 @@ const getListarUsuarios = async function() {
 
             usuariosJSON.usuarios = usuariosComEnderecos;
             usuariosJSON.status_code = 200;
-            return usuariosJSON; // 200 OK
+            return usuariosJSON; 
         } else {
-            return message.ERROR_NOT_FOUND; // 404 Not Found
+            return message.ERROR_NOT_FOUND; 
         }
     } catch (error) {
         console.error(error);
-        return message.ERROR_INTERNAL_SERVER_DB; // 500 Internal Server Error
+        return message.ERROR_INTERNAL_SERVER_DB; 
     }
 };
 
-// Função para buscar um usuário pelo ID
+
 const getBuscarUsuario = async function(id) {
     try {
         if (!id || isNaN(id)) {
-            return message.ERROR_INVALID_ID; // 400 Bad Request
+            return message.ERROR_INVALID_ID; 
         }
 
         let dadosUsuario = await usuarioDAO.selectByIdUser(id);
@@ -77,13 +77,13 @@ const getBuscarUsuario = async function(id) {
                 },
                 status_code: 200
             };
-            return usuarioJSON; // 200 OK
+            return usuarioJSON; 
         } else {
-            return message.ERROR_NOT_FOUND; // 404 Not Found
+            return message.ERROR_NOT_FOUND; 
         }
     } catch (error) {
         console.error(error);
-        return message.ERROR_INTERNAL_SERVER_DB; // 500 Internal Server Error
+        return message.ERROR_INTERNAL_SERVER_DB; 
     }
 };
 
@@ -91,7 +91,7 @@ const getBuscarUsuario = async function(id) {
 const setExcluirUsuario = async function(id) {
     try {
         if (!id || isNaN(id)) {
-            return message.ERROR_INVALID_ID; // 400
+            return message.ERROR_INVALID_ID; 
         }
 
         let usuarioExistente = await usuarioDAO.selectByIdUser(id);
@@ -100,23 +100,24 @@ const setExcluirUsuario = async function(id) {
             let resultadoExclusao = await usuarioDAO.deleteUser(id);
 
             if (resultadoExclusao) {
-                return message.SUCCESS_DELETED_ITEM; // 200
+                return message.SUCCESS_DELETED_ITEM; 
             } else {
-                return message.ERROR_INTERNAL_SERVER_DB; // 500
+                return message.ERROR_INTERNAL_SERVER_DB; 
             }
         } else {
-            return message.ERROR_NOT_FOUND; // 404
+            return message.ERROR_NOT_FOUND; 
         }
     } catch (error) {
         console.error(error);
-        return message.ERROR_INTERNAL_SERVER; // 500
+        return message.ERROR_INTERNAL_SERVER;
     }
 };
+
 
 const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
     try {
         if (String(contentType).toLowerCase() !== 'application/json') {
-            return message.ERROR_CONTENT_TYPE; // 415
+            return message.ERROR_CONTENT_TYPE; 
         }
 
         if (!dadosUsuario.cpf || dadosUsuario.cpf.length > 11 ||
@@ -125,29 +126,35 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
             !dadosUsuario.email || dadosUsuario.email.length > 100 ||
             !dadosUsuario.telefone || dadosUsuario.telefone.length > 20
         ) {
-            return message.ERROR_REQUIRED_FIELDS; // 400
+            return message.ERROR_REQUIRED_FIELDS; 
         }
 
-        let novoUsuario = await usuarioDAO.insertUser(dadosUsuario, dadosUsuario.endereco);
-        if (novoUsuario) {
-            let usuarioComEndereco = await usuarioDAO.selectByIdUser(novoUsuario.id);
+        // Armazenar a senha separadamente
+        let senhaTemporaria = dadosUsuario.senha;
+        delete dadosUsuario.senha;
 
-            let resultadoUsuario = {
+        // Criar o novo usuário sem a senha
+        let novoUsuario = await usuarioDAO.insertUser(dadosUsuario, dadosUsuario.endereco);
+        
+        if (novoUsuario) {
+            // Retorna o usuário criado sem a senha
+            let usuarioComEndereco = await usuarioDAO.selectByIdUser(novoUsuario.id);
+            return {
                 status: message.SUCCESS_CREATED_ITEM.status,
                 status_code: message.SUCCESS_CREATED_ITEM.status_code,
                 message: message.SUCCESS_CREATED_ITEM.message,
-                usuario: usuarioComEndereco
-            };
-            return resultadoUsuario; // 201
+                usuario: usuarioComEndereco,
+                // Você pode retornar o ID para uso no endpoint de atualização de senha
+                usuarioId: novoUsuario.id 
+            }; 
         } else {
-            return message.ERROR_INTERNAL_SERVER_DB; // 500
+            return message.ERROR_INTERNAL_SERVER_DB; 
         }
+
     } catch (error) {
-        console.error(error);
-        return message.ERROR_INTERNAL_SERVER; // 500
+        return message.ERROR_INTERNAL_SERVER_DB; 
     }
 };
-
 
 
 const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEndereco) {
@@ -159,28 +166,28 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
             !novosDadosUsuario.email || novosDadosUsuario.email.length > 100 ||
             !novosDadosUsuario.telefone || novosDadosUsuario.telefone.length > 20
         ) {
-            return message.ERROR_INVALID_INPUT; // 400 Bad Request
+            return message.ERROR_INVALID_INPUT; 
         }
 
         let usuarioExistente = await usuarioDAO.selectByIdUser(id);
 
         if (usuarioExistente) {
-            // Atualiza o usuário
+    
             let resultadoAtualizacao = await usuarioDAO.updateUser(id, novosDadosUsuario);
 
-            // Atualiza o endereço se fornecido
+         
             if (novosDadosEndereco) {
                 if (usuarioExistente.endereco) {
-                    // Atualiza endereço existente
+                   
                     await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
                 } else {
-                    // Adiciona novo endereço se não houver
+
                     await usuarioDAO.insertUserAddress(id, novosDadosEndereco);
                 }
             }
 
             if (resultadoAtualizacao) {
-                // Obtém o usuário atualizado com o endereço
+
                 let usuarioAtualizado = await usuarioDAO.selectByIdUser(id);
 
                 return {
@@ -207,60 +214,51 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
                     }
                 };
             } else {
-                return message.ERROR_INTERNAL_SERVER_DB; // 500 Internal Server Error
+                return message.ERROR_INTERNAL_SERVER_DB; 
             }
         } else {
-            return message.ERROR_NOT_FOUND; // 404 Not Found
+            return message.ERROR_NOT_FOUND; 
         }
     } catch (error) {
         console.error(error);
-        return message.ERROR_INTERNAL_SERVER; // 500 Internal Server Error
+        return message.ERROR_INTERNAL_SERVER; 
     }
 };
 
-const loginUsuario = async function(email, senha) {
+const setAtualizarSenhaUsuario = async function(usuarioId, senha) {
     try {
-
-        if (!email || !senha) {
+        // Verificar se a senha está presente e válida
+        if (!senha || senha.length < 6) {
             return message.ERROR_REQUIRED_FIELDS;
         }
 
+        // Fazer o hash da senha antes de salvar
+        const senhaHash = await bcrypt.hash(senha, 10);
 
-        let dadosUsuario = await usuarioDAO.selectUserByEmail(email);
+        // Atualizar o usuário com a nova senha
+        let usuarioAtualizado = await usuarioDAO.updateSenhaUsuario(usuarioId, senhaHash);
 
-        if (dadosUsuario) {
-
-            const senhaValida = await bcrypt.compare(senha, dadosUsuario.senha);
-
-            if (senhaValida) {
-
-                let usuarioJSON = {
-                    usuario: {
-                        id: dadosUsuario.id,
-                        nome: dadosUsuario.nome,
-                        sobrenome: dadosUsuario.sobrenome,
-                        email: dadosUsuario.email
-
-                    },
-                    status_code: 200
-                };
-                return usuarioJSON;
-            } else {
-                return message.ERROR_INVALID_CREDENTIALS;
-            }
+        if (usuarioAtualizado) {
+            return {
+                status: message.SUCCESS_UPDATED_ITEM.status,
+                status_code: message.SUCCESS_UPDATED_ITEM.status_code,
+                message: message.SUCCESS_UPDATED_ITEM.message,
+            };
         } else {
-            return message.ERROR_NOT_FOUND;
+            return message.ERROR_INTERNAL_SERVER_DB; 
         }
+
     } catch (error) {
-        console.error(error);
-        return message.ERROR_INTERNAL_SERVER_DB;
+        return message.ERROR_INTERNAL_SERVER_DB; 
     }
 };
+
 
 module.exports = {
     getListarUsuarios,
     getBuscarUsuario,
     setExcluirUsuario,
     setInserirNovoUsuario,
-    setAtualizarUsuario
+    setAtualizarUsuario,
+    setAtualizarSenhaUsuario
 };

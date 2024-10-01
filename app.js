@@ -44,7 +44,7 @@ app.get('/v1/itermob/usuario/:id/endereco', async function(request, response) {
     response.status(dadosUsuarioEndereco.status_code).json(dadosUsuarioEndereco);
 });
 
-app.post('/v1/itermob/inserirUsuario', async function(request, response) {
+app.post('/v1/itermob/usuario', async function(request, response) {
     let dadosBody = request.body;
     let contentType = request.is();
     let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, contentType);
@@ -88,7 +88,7 @@ app.get('/v1/itermob/endereco/:id', async function(request, response) {
 });
 
 
-app.post('/v1/itermob/inserirEndereco', async function(request, response) {
+app.post('/v1/itermob/endereco', async function(request, response) {
     let dadosBody = request.body;
     let resultDados = await controllerEndereco.setInserirNovoEndereco(dadosBody);
     response.status(resultDados.status_code).json(resultDados);
@@ -111,7 +111,7 @@ app.put('/v1/itermob/endereco/:id', async function(request, response) {
 
 ////////////////////////////////////////////////////////////////////// End Point Autenticação ///////////////////////////////////////////////////////////////////////////////////////////
 
-app.post('/v1/itermob/inserirAutenticacao', async function(request, response) {
+app.post('/v1/itermob/autenticacao', async function(request, response) {
     let { idUsuario, senha } = request.body;
     let resultDados = await controllerAutenticacao.setInserirAutenticacao(idUsuario, senha);
     response.status(resultDados.status_code).json(resultDados);

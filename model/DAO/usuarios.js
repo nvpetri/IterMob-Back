@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Função para selecionar todos os usuários com seus endereços
+
 const selectAllUsers = async function() {
     try {
         let sql = `
@@ -21,7 +21,7 @@ const selectAllUsers = async function() {
     }
 };
 
-// Função para selecionar um usuário pelo ID
+
 const selectByIdUser = async function(id) {
     try {
         let sql = `
@@ -40,37 +40,34 @@ const selectByIdUser = async function(id) {
     }
 };
 
-const gerarHashMD5 = (senha) => {
-    return crypto.createHash('md5').update(senha).digest('hex');
-};
-
 const insertUser = async function(dadosUsuario, dadosEndereco) {
-    console.log("cheguei no dao", dadosUsuario);
     try {
-        // Gerar hash da senha com MD5
+  
         const senhaHash = gerarHashMD5(dadosUsuario.senha);
 
-        let resultUsuario = await prisma.$queryRaw `INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) RETURNING id;`;
+        let resultUsuario = await prisma.$queryRaw`
+            INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
+            VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) 
+            RETURNING id;`;
 
         let idUsuario = resultUsuario[0].id;
 
-        console.log(idUsuario, "o resultado foi esse: ", resultUsuario);
 
         if (resultUsuario) {
             if (dadosEndereco) {
-                let sqlEndereco = `
+                await prisma.$executeRawUnsafe(`
                     INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                `;
-                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
-
-                return resultEndereco ? { id: idUsuario } : false;
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`, 
+                    dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, 
+                    dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
             }
 
-            // Inserir a autenticação do usuário
-            await prisma.$executeRawUnsafe(`INSERT INTO tbl_autenticacao (id_usuario, senha) VALUES (${idUsuario}, '${senhaHash}');`);
 
-            return { id: idUsuario };
+            await prisma.$executeRawUnsafe(`
+                INSERT INTO tbl_autenticacao (id_usuario, senha) 
+                VALUES (?, ?)`, idUsuario, senhaHash);
+
+            return { id: idUsuario }; 
         } else {
             return false;
         }
@@ -80,7 +77,7 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
     }
 };
 
-// Função para atualizar os dados do usuário
+
 const updateUser = async function(id, novosDadosUsuario) {
     try {
         let sqlUsuario = `
@@ -98,7 +95,7 @@ const updateUser = async function(id, novosDadosUsuario) {
     }
 };
 
-// Função para atualizar o endereço
+
 const updateEndereco = async function(idEndereco, novosDadosEndereco) {
     try {
         let sqlEndereco = `
@@ -115,7 +112,7 @@ const updateEndereco = async function(idEndereco, novosDadosEndereco) {
     }
 };
 
-// Função para inserir um novo endereço para um usuário existente
+
 const insertUserAddress = async function(idUsuario, dadosEndereco) {
     try {
         let sqlEndereco = `
@@ -131,7 +128,7 @@ const insertUserAddress = async function(idUsuario, dadosEndereco) {
     }
 };
 
-// Função para excluir um usuário e seus endereços
+
 const deleteUser = async function(id) {
     try {
         let sqlEndereco = `
@@ -150,12 +147,13 @@ const deleteUser = async function(id) {
     }
 };
 
-// const selectValidarUsuarioEmail = async (email, senha) => {
+const updateSenhaUsuario = async function(usuarioId, senhaHash) {
+    return await prisma.tbl_usuarios.update({
+        where: { id: usuarioId },
+        data: { senha: senhaHash }
+    });
+};
 
-//     try {
-//         let sql = `select id, email from tbl_usuario where email = '${email}' and senha = md5('${senha}')`
-//     }
-// }
 
 module.exports = {
     selectAllUsers,
@@ -164,5 +162,6 @@ module.exports = {
     updateUser,
     updateEndereco,
     insertUserAddress,
-    deleteUser
+    deleteUser,
+    updateSenhaUsuario
 };
