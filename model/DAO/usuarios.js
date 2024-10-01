@@ -42,9 +42,6 @@ const selectByIdUser = async function(id) {
 
 const insertUser = async function(dadosUsuario, dadosEndereco) {
     try {
-  
-        const senhaHash = gerarHashMD5(dadosUsuario.senha);
-
         let resultUsuario = await prisma.$queryRaw`
             INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
             VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) 
