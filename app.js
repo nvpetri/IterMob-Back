@@ -112,11 +112,16 @@ app.put('/v1/itermob/endereco/:id', async function(request, response) {
 ////////////////////////////////////////////////////////////////////// End Point Autenticação ///////////////////////////////////////////////////////////////////////////////////////////
 
 app.post('/v1/itermob/autenticacao', async function(request, response) {
-    let { idUsuario, senha } = request.body;
-    let resultDados = await controllerAutenticacao.setInserirAutenticacao(idUsuario, senha);
+    let { idUsuario, chave } = request.body;
+    let resultDados = await controllerAutenticacao.setInserirAutenticacao(idUsuario, chave);
     response.status(resultDados.status_code).json(resultDados);
 });
 
+app.get('/v1/itermob/autentcacao/:id', async function(request, response, next){
+    let idUsuario = request.params.id
+    let result = await controllerAutenticacao.getUserAutentication(idUsuario)
+    response.status(resuly.status_code).json(result)
+})
 
 app.listen(8080, function() {
     console.log('Servidor rodando na porta 8080');

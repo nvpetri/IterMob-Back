@@ -21,6 +21,20 @@ const setInserirAutenticacao = async function(idUsuario, senha) {
     }
 };
 
+const getUserAutentication = async function(id_usuario){
+    try {
+        if(!id_usuario){
+            return message.ERROR_INVALID_ID
+        }else{
+            
+        }
+
+    } catch (error) {
+        
+    }
+}
+
 module.exports = {
-    setInserirAutenticacao
+    setInserirAutenticacao,
+    getUserAutentication
 };

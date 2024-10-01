@@ -142,14 +142,7 @@ const deleteUser = async function(id) {
         console.error(error);
         return false;
     }
-};
-
-const updateSenhaUsuario = async function(usuarioId, senhaHash) {
-    return await prisma.tbl_usuarios.update({
-        where: { id: usuarioId },
-        data: { senha: senhaHash }
-    });
-};
+}
 
 
 module.exports = {
@@ -159,6 +152,5 @@ module.exports = {
     updateUser,
     updateEndereco,
     insertUserAddress,
-    deleteUser,
-    updateSenhaUsuario
+    deleteUser
 };

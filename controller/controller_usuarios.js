@@ -1,4 +1,5 @@
 const message = require('../modulo/config.js');
+const autenticacao = require('../model/DAO/autenticacao.js')
 const usuarioDAO = require('../model/DAO/usuarios.js');
 const bcrypt = require('bcrypt');
 
@@ -236,7 +237,7 @@ const setAtualizarSenhaUsuario = async function(usuarioId, senha) {
         const senhaHash = await bcrypt.hash(senha, 10);
 
         // Atualizar o usuário com a nova senha
-        let usuarioAtualizado = await usuarioDAO.updateSenhaUsuario(usuarioId, senhaHash);
+        let usuarioAtualizado = await autenticacao.updateSenha(usuarioId, senhaHash);
 
         if (usuarioAtualizado) {
             return {

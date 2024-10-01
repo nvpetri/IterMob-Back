@@ -15,6 +15,16 @@ const insertUserAuthentication = async function(idUsuario, senhaHash) {
         return false;
     }
 };
+
+const updateSenha = async function(usuarioId, senhaHash) {
+    return await prisma.tbl_usuarios.update({
+        where: { id: usuarioId },
+        data: { senha: senhaHash }
+    });
+};
+
+
 module.exports = {
-    insertUserAuthentication
+    insertUserAuthentication,
+    updateSenha
 };

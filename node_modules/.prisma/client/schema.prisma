@@ -22,12 +22,22 @@ model tbl_endereco {
 }
 
 model tbl_usuarios {
-  id           Int            @id @default(autoincrement())
-  cpf          String         @db.VarChar(11)
-  nome         String         @db.VarChar(200)
-  sobrenome    String         @db.VarChar(200)
-  email        String         @db.VarChar(100)
-  telefone     String         @db.VarChar(20)
-  foto_perfil  String?        @db.VarChar(200)
-  tbl_endereco tbl_endereco[]
+  id               Int                @id @default(autoincrement())
+  cpf              String             @db.VarChar(11)
+  nome             String             @db.VarChar(200)
+  sobrenome        String             @db.VarChar(200)
+  email            String             @db.VarChar(100)
+  telefone         String             @db.VarChar(20)
+  foto_perfil      String?            @db.VarChar(200)
+  tbl_autenticacao tbl_autenticacao[]
+  tbl_endereco     tbl_endereco[]
+}
+
+model tbl_autenticacao {
+  id           Int          @id @default(autoincrement())
+  id_usuario   Int
+  senha        String       @db.VarChar(255)
+  tbl_usuarios tbl_usuarios @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "tbl_autenticacao_ibfk_1")
+
+  @@index([id_usuario], map: "id_usuario")
 }
