@@ -44,11 +44,35 @@ app.get('/v1/itermob/usuario/:id/endereco', async function(request, response) {
     response.status(dadosUsuarioEndereco.status_code).json(dadosUsuarioEndereco);
 });
 
+// Função para converter BigInt para string
+function convertBigIntToString(obj) {
+    if (typeof obj === 'bigint') {
+        return obj.toString();
+    } else if (Array.isArray(obj)) {
+        return obj.map(convertBigIntToString);
+    } else if (typeof obj === 'object' && obj !== null) {
+        return Object.fromEntries(
+            Object.entries(obj).map(([key, value]) => [key, convertBigIntToString(value)])
+        );
+    }
+    return obj;
+}
+
 app.post('/v1/itermob/usuario', async function(request, response) {
+    let contentType = request.headers['content-type'];
     let dadosBody = request.body;
-    let contentType = request.is();
-    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, contentType);
-    response.status(resultDados.status_code).json(resultDados);
+
+    try {
+        let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, contentType);
+
+        // Converta BigInt para string antes de responder
+        resultDados = convertBigIntToString(resultDados);
+
+        response.status(resultDados.status_code).json(resultDados);
+    } catch (error) {
+        console.error('Erro:', error);
+        response.status(500).json({ message: 'Erro interno do servidor' });
+    }
 });
 
 
@@ -88,6 +112,7 @@ app.get('/v1/itermob/endereco/:id', async function(request, response) {
 });
 
 
+
 app.post('/v1/itermob/endereco', async function(request, response) {
     let dadosBody = request.body;
     let resultDados = await controllerEndereco.setInserirNovoEndereco(dadosBody);
@@ -117,7 +142,7 @@ app.post('/v1/itermob/autenticacao', async function(request, response) {
     response.status(resultDados.status_code).json(resultDados);
 });
 
-app.get('/v1/itermob/autentcacao/:id', async function(request, response, next){
+app.get('/v1/itermob/autentcacao/:id', async function(request, response, next) {
     let idUsuario = request.params.id
     let result = await controllerAutenticacao.getUserAutentication(idUsuario)
     response.status(resuly.status_code).json(result)

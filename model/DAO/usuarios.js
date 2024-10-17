@@ -42,29 +42,29 @@ const selectByIdUser = async function(id) {
 
 const insertUser = async function(dadosUsuario, dadosEndereco) {
     try {
-        let resultUsuario = await prisma.$queryRaw`
+        // Inserir usuário sem a cláusula RETURNING
+        await prisma.$executeRawUnsafe(`
             INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
-            VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) 
-            RETURNING id;`;
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            dadosUsuario.cpf, dadosUsuario.nome, dadosUsuario.sobrenome,
+            dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
 
+        // Obter o ID do último usuário inserido
+        let resultUsuario = await prisma.$queryRawUnsafe(`SELECT LAST_INSERT_ID() as id;`);
         let idUsuario = resultUsuario[0].id;
 
-
-        if (resultUsuario) {
+        if (idUsuario) {
+            // Inserir o endereço se fornecido
             if (dadosEndereco) {
                 await prisma.$executeRawUnsafe(`
                     INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)`, 
-                    dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero,
                     dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
             }
 
-
-            await prisma.$executeRawUnsafe(`
-                INSERT INTO tbl_autenticacao (id_usuario, senha) 
-                VALUES (?, ?)`, idUsuario, senhaHash);
-
-            return { id: idUsuario }; 
+            // Retornar o ID do usuário criado
+            return { id: idUsuario };
         } else {
             return false;
         }
