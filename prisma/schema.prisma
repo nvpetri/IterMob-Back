@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tbl_endereco {
+  id           Int           @id @default(autoincrement())
+  id_usuario   Int?
+  cep          String        @db.VarChar(10)
+  rua          String        @db.VarChar(100)
+  numero       String?       @db.VarChar(10)
+  cidade       String        @db.VarChar(100)
+  bairro       String?       @db.VarChar(100)
+  estado       String        @db.VarChar(100)
+  tbl_usuarios tbl_usuarios? @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_endereco_ibfk_1")
+
+  @@index([id_usuario], map: "idx_tbl_endereco_id_usuario")
+}
+
+model tbl_usuarios {
+  id                    Int                     @id @default(autoincrement())
+  cpf                   String                  @db.VarChar(11)
+  nome                  String                  @db.VarChar(200)
+  sobrenome             String                  @db.VarChar(200)
+  email                 String                  @db.VarChar(100)
+  telefone              String                  @db.VarChar(20)
+  foto_perfil           String?                 @db.VarChar(200)
+  favoritos             favoritos[]
+  tbl_autenticacao      tbl_autenticacao[]
+  tbl_endereco          tbl_endereco[]
+  tbl_historico_viagens tbl_historico_viagens[]
+}
+
+model tbl_autenticacao {
+  id           Int          @id @default(autoincrement())
+  id_usuario   Int
+  senha        String       @db.VarChar(255)
+  tbl_usuarios tbl_usuarios @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_autenticacao_ibfk_1")
+
+  @@index([id_usuario], map: "idx_tbl_autenticacao_id_usuario")
+}
+
+model favoritos {
+  id            Int          @id @default(autoincrement())
+  id_itinerario Int
+  id_usuario    Int
+  itinerario    itinerario   @relation(fields: [id_itinerario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "favoritos_ibfk_1")
+  tbl_usuarios  tbl_usuarios @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "favoritos_ibfk_2")
+
+  @@index([id_itinerario], map: "idx_favoritos_id_itinerario")
+  @@index([id_usuario], map: "idx_favoritos_id_usuario")
+}
+
+model itinerario {
+  id        Int         @id @default(autoincrement())
+  origem    String      @db.VarChar(50)
+  destino   String      @db.VarChar(100)
+  linha     String      @db.VarChar(5)
+  favoritos favoritos[]
+}
+
+model tabela {
+  id              Int               @id @default(autoincrement())
+  prefixo         Int
+  linha           String            @db.VarChar(100)
+  motorista       String            @db.VarChar(100)
+  tbl_operacional tbl_operacional[]
+}
+
+model tbl_historico_viagens {
+  id              Int             @id @default(autoincrement())
+  id_usuario      Int
+  codigo_operacao Int
+  id_operacional  Int
+  data_viagem     DateTime        @default(now()) @db.Timestamp(0)
+  tbl_usuarios    tbl_usuarios    @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_historico_viagens_ibfk_1")
+  tbl_operacional tbl_operacional @relation(fields: [id_operacional], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_historico_viagens_ibfk_2")
+
+  @@index([id_operacional], map: "idx_tbl_historico_viagens_id_operacional")
+  @@index([id_usuario], map: "idx_tbl_historico_viagens_id_usuario")
+}
+
+model tbl_operacional {
+  id                    Int                     @id @default(autoincrement())
+  id_onibus             Int
+  sentido               String                  @db.VarChar(6)
+  data_viagem           DateTime                @default(now()) @db.Timestamp(0)
+  tbl_historico_viagens tbl_historico_viagens[]
+  tabela                tabela                  @relation(fields: [id_onibus], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_operacional_ibfk_1")
+
+  @@index([id_onibus], map: "idx_tbl_operacional_id_onibus")
+}
